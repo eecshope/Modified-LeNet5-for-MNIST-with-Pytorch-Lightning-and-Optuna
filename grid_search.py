@@ -31,6 +31,8 @@ parser.add_argument(
     "trials at the early stages of training.",
 )
 parser.add_argument("--model_dir")
+parser.add_argument("--data_dir")
+parser.add_argument("--gpu")
 args = parser.parse_args()
 
 # get ready for the components for training
@@ -38,13 +40,13 @@ MODEL_DIR = args.model_dir
 pruner = optuna.pruners.MedianPruner() if args.pruning else optuna.pruners.NopPruner()
 
 # load the data and build the dataloader
-data_train = FashionMNIST('data',
+data_train = FashionMNIST(args.data_dir,
                           download=False,
                           transform=transforms.Compose([
                               transforms.Resize((32, 32)),
                               transforms.ToTensor()]))
 
-data_val = FashionMNIST('data',
+data_val = FashionMNIST(args.data_dir,
                         train=False,
                         download=False,
                         transform=transforms.Compose([
@@ -70,13 +72,13 @@ def objective(trial: optuna.Trial):
         logger=True,
         checkpoint_callback=checkpoint_callback,
         max_epochs=50,
-        gpus='0' if torch.cuda.is_available() else None,
+        gpus=args.gpu if torch.cuda.is_available() else None,
         callbacks=[metrics_callback],
         early_stop_callback=PyTorchLightningPruningCallback(trial, monitor="val_acc")
     )
 
     model = LeNet5(trial)
-    bsz = trial.suggest_int("bsz", 32, 64, 128)
+    bsz = trial.suggest_int("bsz", 32, 128, 32)
     train_loader = DataLoader(data_train, batch_size=bsz, shuffle=True)
     val_loader = DataLoader(data_val, batch_size=1)
     trainer.fit(model, train_dataloader=train_loader, val_dataloaders=val_loader)
@@ -86,7 +88,7 @@ def objective(trial: optuna.Trial):
 
 # start to find out
 study = optuna.create_study(direction="maximize", pruner=pruner)
-study.optimize(objective, n_trials=100, timeout=600)
+study.optimize(objective, n_trials=100)
 
 print("Number of finished trials: {}".format(len(study.trials)))
 

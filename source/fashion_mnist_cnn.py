@@ -35,8 +35,8 @@ class LeNet5(pl.LightningModule):
             kernel_num = hparams.kernel_num
             got_three = hparams.got_three
         else:
-            kernel_size = hparams.suggest_int('kernel_size', 3, 5, 7)
-            kernel_num = hparams.suggest_int('kernel_num', 16, 32, 64)
+            kernel_size = hparams.suggest_int('kernel_size', 3, 7, 2)
+            kernel_num = hparams.suggest_int('kernel_num', 16, 64, 16)
             got_three = hparams.suggest_int('got_three', 0, 1)
         pad_len = (kernel_size - 1) // 2
         # edge_length = 32
