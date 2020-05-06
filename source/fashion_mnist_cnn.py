@@ -27,17 +27,23 @@ class LeNet5(pl.LightningModule):
     Feel free to try different filter numbers
     """
 
-    def __init__(self, hparams: Union[argparse.Namespace, optuna.Trial]):
+    def __init__(self, hparams: Union[argparse.Namespace, optuna.Trial], kernel_size, kernel_num, got_three):
         super(LeNet5, self).__init__()
 
-        if isinstance(hparams, argparse.Namespace):
-            kernel_size = hparams.kernel_size
-            kernel_num = hparams.kernel_num
-            got_three = hparams.got_three
-        else:
-            kernel_size = hparams.suggest_int('kernel_size', 3, 7, 2)
-            kernel_num = hparams.suggest_int('kernel_num', 16, 64, 16)
-            got_three = hparams.suggest_int('got_three', 0, 1)
+        try:
+            if isinstance(hparams, argparse.Namespace):
+                kernel_size = hparams.kernel_size
+                kernel_num = hparams.kernel_num
+                got_three = hparams.got_three
+            else:
+                kernel_size = hparams.suggest_int('kernel_size', 3, 7, 2)
+                kernel_num = hparams.suggest_int('kernel_num', 16, 64, 16)
+                got_three = hparams.suggest_int('got_three', 0, 1)
+        except AttributeError:
+            kernel_size = kernel_size
+            kernel_num = kernel_num
+            got_three = got_three
+
         pad_len = (kernel_size - 1) // 2
         # edge_length = 32
         if got_three:
@@ -141,3 +147,9 @@ class LeNet5(pl.LightningModule):
         progress_bar = {"test_acc": test_acc}
         log = progress_bar
         return {"log": log, "progress_bar": progress_bar}
+
+    def train_dataloader(self):
+        pass
+
+    def val_dataloader(self):
+        pass
